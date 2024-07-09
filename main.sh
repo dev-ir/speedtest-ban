@@ -81,10 +81,10 @@ loader(){
     read -p "Enter option number: " choice
     case $choice in
     1)
-        install_tunnel
+        block_sites
         ;;  
     2)
-        unistall
+        unblock_sites
         ;;
     0)
         echo -e "${GREEN}Exiting program...${NC}"
