@@ -98,6 +98,7 @@ loader(){
 }
 
 resolve_domain() {
+    dig +short $1
     nslookup $1 | awk '/^Address: / { print $2 }'
 }
 
