@@ -32,6 +32,7 @@ install_jq() {
 }
 
 require_command(){
+    sudo apt-get install dnsutils -y
     wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/sites.dat
     install_jq
 }
@@ -49,8 +50,6 @@ menu(){
 
     # Fetch server isp using ip-api.com 
     SERVER_ISP=$(curl -sS "http://ip-api.com/json/$SERVER_IP" | jq -r '.isp')
-	
-    block_status=$(check_block_status)
 
     echo "+---------------------------------------------------------------------------------------------------------------------------+"
     echo "|   #####   ######   #######  #######  #####    ######## #######   #####   ########          ######     ###    ##   ##      |"
@@ -64,7 +63,6 @@ menu(){
     echo -e "|${GREEN}Server Country    |${NC} $SERVER_COUNTRY"
     echo -e "|${GREEN}Server IP         |${NC} $SERVER_IP"
     echo -e "|${GREEN}Server ISP        |${NC} $SERVER_ISP"
-    #echo -e "|${GREEN}Block Status      |${NC} $block_status"
     echo "+---------------------------------------------------------------------------------------------------------------------------+"
     echo -e "|${YELLOW}Please choose an option:${NC}"
     echo "+---------------------------------------------------------------------------------------------------------------------------+"
@@ -98,8 +96,8 @@ loader(){
 }
 
 resolve_domain() {
-    dig +short $1
-    nslookup $1 | awk '/^Address: / { print $2 }'
+    # dig +short $1
+    # nslookup $1 | awk '/^Address: / { print $2 }'
 }
 
 block_sites() {
