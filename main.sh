@@ -32,6 +32,7 @@ install_jq() {
 }
 
 require_command(){
+    wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/sites.dat
     install_jq
 }
 
