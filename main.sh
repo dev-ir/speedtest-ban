@@ -97,7 +97,7 @@ loader(){
 }
 
 resolve_domain() {
-    dig +short $1 | grep -E "^[0-9.]+$|^[0-9a-fA-F:]+$"
+    nslookup $1 | awk '/^Address: / { print $2 }'
 }
 
 show_progress() {
@@ -115,80 +115,76 @@ show_progress() {
 }
 
 block_sites() {
-    local total_sites=$(grep -cve '^\s*$' "$file")
-    local current_site=0
+    local total_ips=$(grep -cve '^\s*$' "$file")
+    local current_ip=0
 
-    while IFS= read -r site; do
-        if [[ -z "$site" ]]; then
+    while IFS= read -r ip; do
+        if [[ -z "$ip" ]]; then
             continue
         fi
         
-        current_site=$((current_site + 1))
-        ips=$(resolve_domain $site 2>/dev/null)
-        if [[ -z "$ips" ]]; then
-            show_progress $current_site $total_sites
-            continue
+        current_ip=$((current_ip + 1))
+
+        if [[ $ip == *:* ]]; then
+            sudo ip6tables -A OUTPUT -d $ip -j REJECT 2>/dev/null
+            sudo ip6tables -A INPUT -s $ip -j REJECT 2>/dev/null
+            sudo ip6tables -A OUTPUT -d $ip -p icmpv6 -j REJECT 2>/dev/null
+            sudo ip6tables -A INPUT -s $ip -p icmpv6 -j REJECT 2>/dev/null
+        else
+            sudo iptables -A OUTPUT -d $ip -j REJECT 2>/dev/null
+            sudo iptables -A INPUT -s $ip -j REJECT 2>/dev/null
+            sudo iptables -A OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
+            sudo iptables -A INPUT -s $ip -p icmp -j REJECT 2>/dev/null
         fi
 
-        for ip in $ips; do
-            if [[ $ip == *:* ]]; then
-                sudo ip6tables -A OUTPUT -d $ip -j REJECT 2>/dev/null
-                sudo ip6tables -A INPUT -s $ip -j REJECT 2>/dev/null
-                sudo ip6tables -A OUTPUT -d $ip -p icmpv6 -j REJECT 2>/dev/null
-                sudo ip6tables -A INPUT -s $ip -p icmpv6 -j REJECT 2>/dev/null
-            else
-                sudo iptables -A OUTPUT -d $ip -j REJECT 2>/dev/null
-                sudo iptables -A INPUT -s $ip -j REJECT 2>/dev/null
-                sudo iptables -A OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
-                sudo iptables -A INPUT -s $ip -p icmp -j REJECT 2>/dev/null
-            fi
-        done
-        show_progress $current_site $total_sites
+        show_progress $current_ip $total_ips
     done < "$file"
     printf "\n"
+
+sudo iptables -L -v -n
+sudo ip6tables -L -v -n
 
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
 }
+
 
 unblock_sites() {
-    local total_sites=$(grep -cve '^\s*$' "$file")
-    local current_site=0
+    local total_ips=$(grep -cve '^\s*$' "$file")
+    local current_ip=0
 
-    while IFS= read -r site; do
-        if [[ -z "$site" ]]; then
+    while IFS= read -r ip; do
+        if [[ -z "$ip" ]]; then
             continue
         fi
 
-        current_site=$((current_site + 1))
-        ips=$(resolve_domain $site 2>/dev/null)
-        if [[ -z "$ips" ]]; then
-            show_progress $current_site $total_sites
-            continue
+        current_ip=$((current_ip + 1))
+
+        if [[ $ip == *:* ]]; then
+            sudo ip6tables -D OUTPUT -d $ip -j REJECT 2>/dev/null
+            sudo ip6tables -D INPUT -s $ip -j REJECT 2>/dev/null
+            sudo ip6tables -D OUTPUT -d $ip -p icmpv6 -j REJECT 2>/dev/null
+            sudo ip6tables -D INPUT -s $ip -p icmpv6 -j REJECT 2>/dev/null
+        else
+            sudo iptables -D OUTPUT -d $ip -j REJECT 2>/dev/null
+            sudo iptables -D INPUT -s $ip -j REJECT 2>/dev/null
+            sudo iptables -D OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
+            sudo iptables -D INPUT -s $ip -p icmp -j REJECT 2>/dev/null
         fi
 
-        for ip in $ips; do
-            if [[ $ip == *:* ]]; then
-                sudo ip6tables -D OUTPUT -d $ip -j REJECT 2>/dev/null
-                sudo ip6tables -D INPUT -s $ip -j REJECT 2>/dev/null
-                sudo ip6tables -D OUTPUT -d $ip -p icmpv6 -j REJECT 2>/dev/null
-                sudo ip6tables -D INPUT -s $ip -p icmpv6 -j REJECT 2>/dev/null
-            else
-                sudo iptables -D OUTPUT -d $ip -j REJECT 2>/dev/null
-                sudo iptables -D INPUT -s $ip -j REJECT 2>/dev/null
-                sudo iptables -D OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
-                sudo iptables -D INPUT -s $ip -p icmp -j REJECT 2>/dev/null
-            fi
-        done
-        show_progress $current_site $total_sites
+        show_progress $current_ip $total_ips
     done < "$file"
     printf "\n"
+
+sudo iptables -L -v -n
+sudo ip6tables -L -v -n
 
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
 }
+
 
 
 
