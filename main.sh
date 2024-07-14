@@ -51,23 +51,23 @@ menu(){
     # Fetch server isp using ip-api.com 
     SERVER_ISP=$(curl -sS "http://ip-api.com/json/$SERVER_IP" | jq -r '.isp')
 
-    echo "+---------------------------------------------------------------------------------------------------------------------------------+"
-    echo "|   #####   ######   #######  #######  #####    ######## #######   #####   ########          ######     ###    ##   ##            |"
-    echo "|  ##   ##   ##  ##   ##   #   ##   #   ## ##   ## ## ##  ##   #  ##   ##  ## ## ##           ##  ##   ## ##   ###  ##            |"
-    echo "|  ##        ##  ##   ##       ##       ##  ##     ##     ##      ##          ##              ##  ##  ##   ##  #### ##            |"
-    echo "|   #####    #####    ####     ####     ##  ##     ##     ####     #####      ##              #####   ##   ##  #######            |"
-    echo "|       ##   ##       ##       ##       ##  ##     ##     ##           ##     ##              ##  ##  #######  ## ####            |"
-    echo "|  ##   ##   ##       ##   #   ##   #   ## ##      ##     ##   #  ##   ##     ##              ##  ##  ##   ##  ##  ###            |"
-    echo "|   #####   ####     #######  #######  #####      ####   #######   #####     ####            ######   ##   ##  ##   ## ( 0.3 )    |"
-    echo "+---------------------------------------------------------------------------------------------------------------------------------+"                                                                                                         
+    echo "+-------------------------------------------------------------------------------------------------------------------------+"
+    echo "|   #####   ######   #######  #######  #####    ######## #######   #####   ########    ######     ###    ##   ##         |"
+    echo "|  ##   ##   ##  ##   ##   #   ##   #   ## ##   ## ## ##  ##   #  ##   ##  ## ## ##     ##  ##   ## ##   ###  ##         |"
+    echo "|  ##        ##  ##   ##       ##       ##  ##     ##     ##      ##          ##        ##  ##  ##   ##  #### ##         |"
+    echo "|   #####    #####    ####     ####     ##  ##     ##     ####     #####      ##        #####   ##   ##  #######         |"
+    echo "|       ##   ##       ##       ##       ##  ##     ##     ##           ##     ##        ##  ##  #######  ## ####         |"
+    echo "|  ##   ##   ##       ##   #   ##   #   ## ##      ##     ##   #  ##   ##     ##        ##  ##  ##   ##  ##  ###         |"
+    echo "|   #####   ####     #######  #######  #####      ####   #######   #####     ####      ######   ##   ##  ##   ## ( 0.3 ) |"
+    echo "+------------------------------------------------------------------------------------------------------------------------+"                                                                                                         
     echo -e "|${GREEN}Server Country    |${NC} $SERVER_COUNTRY"
     echo -e "|${GREEN}Server IP         |${NC} $SERVER_IP"
     echo -e "|${GREEN}Server ISP        |${NC} $SERVER_ISP"
-    echo "+---------------------------------------------------------------------------------------------------------------------------+"
+    echo "+------------------------------------------------------------------------------------------------------------------------+"
     echo -e "|${YELLOW}Please choose an option:${NC}"
-    echo "+---------------------------------------------------------------------------------------------------------------------------+"
+    echo "+------------------------------------------------------------------------------------------------------------------------+"
     echo -e $1
-    echo "+---------------------------------------------------------------------------------------------------------------------------+"
+    echo "+------------------------------------------------------------------------------------------------------------------------+"
     echo -e "\033[0m"
 }
 
@@ -99,7 +99,6 @@ resolve_domain() {
     dig +short $1 | grep -E "^[0-9.]+$|^[0-9a-fA-F:]+$"
 }
 
-# تابع برای نمایش نوار پیشرفت
 show_progress() {
     local current=$1
     local total=$2
@@ -114,13 +113,11 @@ show_progress() {
     printf "] %d%%" $percent
 }
 
-# تابع برای بن کردن سایت‌ها
 block_sites() {
     local total_sites=$(grep -cve '^\s*$' "$file")
     local current_site=0
 
     while IFS= read -r site; do
-        # پرش از خطوط خالی
         if [[ -z "$site" ]]; then
             continue
         fi
@@ -128,8 +125,6 @@ block_sites() {
         current_site=$((current_site + 1))
         ips=$(resolve_domain $site 2>/dev/null)
         if [[ -z "$ips" ]]; then
-            # خطای عدم توانایی حل دامنه به /dev/null ارسال می‌شود
-            echo "Could not resolve $site, skipping..." > /dev/null
             show_progress $current_site $total_sites
             continue
         fi
@@ -151,9 +146,7 @@ block_sites() {
     done < "$file"
     printf "\n"
 
-    # ایجاد دایرکتوری /etc/iptables در صورت عدم وجود
     sudo mkdir -p /etc/iptables
-    # ذخیره قوانین iptables و ip6tables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
 }
@@ -163,30 +156,28 @@ unblock_sites() {
     local current_site=0
 
     while IFS= read -r site; do
-        # پرش از خطوط خالی
         if [[ -z "$site" ]]; then
             continue
         fi
-        
+
         current_site=$((current_site + 1))
-        ips=$(resolve_domain $site)
+        ips=$(resolve_domain $site 2>/dev/null)
         if [[ -z "$ips" ]]; then
-            echo "Could not resolve $site, skipping..."
             show_progress $current_site $total_sites
             continue
         fi
 
         for ip in $ips; do
             if [[ $ip == *:* ]]; then
-                sudo ip6tables -D OUTPUT -d $ip -j REJECT
-                sudo ip6tables -D INPUT -s $ip -j REJECT
-                sudo ip6tables -D OUTPUT -d $ip -p icmpv6 -j REJECT
-                sudo ip6tables -D INPUT -s $ip -p icmpv6 -j REJECT
+                sudo ip6tables -D OUTPUT -d $ip -j REJECT 2>/dev/null
+                sudo ip6tables -D INPUT -s $ip -j REJECT 2>/dev/null
+                sudo ip6tables -D OUTPUT -d $ip -p icmpv6 -j REJECT 2>/dev/null
+                sudo ip6tables -D INPUT -s $ip -p icmpv6 -j REJECT 2>/dev/null
             else
-                sudo iptables -D OUTPUT -d $ip -j REJECT
-                sudo iptables -D INPUT -s $ip -j REJECT
-                sudo iptables -D OUTPUT -d $ip -p icmp -j REJECT
-                sudo iptables -D INPUT -s $ip -p icmp -j REJECT
+                sudo iptables -D OUTPUT -d $ip -j REJECT 2>/dev/null
+                sudo iptables -D INPUT -s $ip -j REJECT 2>/dev/null
+                sudo iptables -D OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
+                sudo iptables -D INPUT -s $ip -p icmp -j REJECT 2>/dev/null
             fi
         done
         show_progress $current_site $total_sites
@@ -194,37 +185,10 @@ unblock_sites() {
     printf "\n"
 
     sudo mkdir -p /etc/iptables
-    sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null
-    sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null
+    sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
+    sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
 }
 
-check_block_status() {
-    while IFS= read -r site; do
-        if [[ -z "$site" ]]; then
-            continue
-        fi
-
-        ips=$(resolve_domain $site)
-        blocked="false"
-        for ip in $ips; do
-            if [[ $ip == *:* ]]; then
-                output=$(sudo ip6tables -L -v -n | grep $ip)
-            else
-                output=$(sudo iptables -L -v -n | grep $ip)
-            fi
-            if [[ -n $output ]]; then
-                blocked="true"
-                break
-            fi
-        done
-
-        if [[ $blocked == "true" ]]; then
-            echo "$site is Enable"
-        else
-            echo "$site is Disable"
-        fi
-    done < "$file"
-}
 
 
 require_command
