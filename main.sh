@@ -76,7 +76,7 @@ menu(){
 
 loader(){
     
-    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Backup \n| 3  - Restore Settings \n| 0  - Exit"
+    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Backup Settings \n| 3  - Restore Settings \n| 0  - Exit"
     
     read -p "Enter option number: " choice
     case $choice in
@@ -193,7 +193,7 @@ function backup_db(){
     
     mkdir /root/speedtest_ban_backup/
     cp /etc/x-ui/x-ui.db /root/speedtest_ban_backup/
-    echo -e "Backup has been created."
+    echo -e "${RED} Backup has been created in '/root/speedtest_ban_backup/x-ui.db' ."
 
 }
 
