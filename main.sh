@@ -99,6 +99,7 @@ resolve_domain() {
     dig +short $1 | grep -E "^[0-9.]+$|^[0-9a-fA-F:]+$"
 }
 
+# تابع برای نمایش نوار پیشرفت
 show_progress() {
     local current=$1
     local total=$2
@@ -113,43 +114,48 @@ show_progress() {
     printf "] %d%%" $percent
 }
 
+# تابع برای بن کردن سایت‌ها
 block_sites() {
     local total_sites=$(grep -cve '^\s*$' "$file")
     local current_site=0
 
     while IFS= read -r site; do
+        # پرش از خطوط خالی
         if [[ -z "$site" ]]; then
             continue
         fi
         
         current_site=$((current_site + 1))
-        ips=$(resolve_domain $site)
+        ips=$(resolve_domain $site 2>/dev/null)
         if [[ -z "$ips" ]]; then
-            echo "Could not resolve $site, skipping..."
+            # خطای عدم توانایی حل دامنه به /dev/null ارسال می‌شود
+            echo "Could not resolve $site, skipping..." > /dev/null
             show_progress $current_site $total_sites
             continue
         fi
 
         for ip in $ips; do
             if [[ $ip == *:* ]]; then
-                sudo ip6tables -A OUTPUT -d $ip -j REJECT
-                sudo ip6tables -A INPUT -s $ip -j REJECT
-                sudo ip6tables -A OUTPUT -d $ip -p icmpv6 -j REJECT
-                sudo ip6tables -A INPUT -s $ip -p icmpv6 -j REJECT
+                sudo ip6tables -A OUTPUT -d $ip -j REJECT 2>/dev/null
+                sudo ip6tables -A INPUT -s $ip -j REJECT 2>/dev/null
+                sudo ip6tables -A OUTPUT -d $ip -p icmpv6 -j REJECT 2>/dev/null
+                sudo ip6tables -A INPUT -s $ip -p icmpv6 -j REJECT 2>/dev/null
             else
-                sudo iptables -A OUTPUT -d $ip -j REJECT
-                sudo iptables -A INPUT -s $ip -j REJECT
-                sudo iptables -A OUTPUT -d $ip -p icmp -j REJECT
-                sudo iptables -A INPUT -s $ip -p icmp -j REJECT
+                sudo iptables -A OUTPUT -d $ip -j REJECT 2>/dev/null
+                sudo iptables -A INPUT -s $ip -j REJECT 2>/dev/null
+                sudo iptables -A OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
+                sudo iptables -A INPUT -s $ip -p icmp -j REJECT 2>/dev/null
             fi
         done
         show_progress $current_site $total_sites
     done < "$file"
     printf "\n"
 
+    # ایجاد دایرکتوری /etc/iptables در صورت عدم وجود
     sudo mkdir -p /etc/iptables
-    sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null
-    sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null
+    # ذخیره قوانین iptables و ip6tables
+    sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
+    sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
 }
 
 unblock_sites() {
