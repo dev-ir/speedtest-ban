@@ -5,6 +5,7 @@ import os
 db_file = '/etc/x-ui/x-ui.db'
 sites_file = '/root/speedtest_sites.dat'
 backup_dir = '/root/speedtest_ban_backup'
+backup_file = os.path.join(backup_dir, 'xrayTemplateConfig_backup.txt')
 
 def get_sites_from_file(file_path):
     try:
@@ -28,7 +29,6 @@ def backup_xray_template_config(value):
         print(f"Error writing to backup file {backup_file}: {e}")
 
 
-
 def add_sites_to_blocklist():
     try:
         conn = sqlite3.connect(db_file)
@@ -39,7 +39,7 @@ def add_sites_to_blocklist():
         if row:
             xray_template_config_json = row[0]
             # Backup the current xrayTemplateConfig value
-            # backup_xray_template_config(xray_template_config_json)
+            backup_xray_template_config(xray_template_config_json)
             xray_template_config = json.loads(xray_template_config_json)
 
             if 'routing' not in xray_template_config:
