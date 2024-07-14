@@ -76,7 +76,7 @@ menu(){
 
 loader(){
     
-    menu "| 1  - Block Speedtest \n| 2  - Unblock Speedtest \n| 0  - Exit"
+    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Unblock Speedtest \n| 0  - Exit"
     
     read -p "Enter option number: " choice
     case $choice in
