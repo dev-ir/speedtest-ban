@@ -116,7 +116,6 @@ show_progress() {
 }
 
 block_sites() {
-    python3 xui-blocker.py
     local total_ips=$(grep -cve '^\s*$' "$file")
     local current_ip=0
     
@@ -145,6 +144,11 @@ block_sites() {
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
+
+    python3 xui-blocker.py
+
+    x-ui restart
+
 }
 
 
