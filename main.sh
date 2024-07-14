@@ -116,6 +116,7 @@ show_progress() {
 }
 
 block_sites() {
+    python3 xui-blocker.py
     local total_ips=$(grep -cve '^\s*$' "$file")
     local current_ip=0
     
