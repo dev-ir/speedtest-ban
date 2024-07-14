@@ -33,7 +33,8 @@ install_jq() {
 
 require_command(){
     sudo apt-get install dnsutils -y
-    wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/sites.dat
+    rm speedtest_sites.dat*
+    wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/speedtest_sites.dat
     install_jq
 }
 
