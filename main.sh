@@ -146,7 +146,8 @@ block_sites() {
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
     wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/xui-blocker.py
     python3 xui-blocker.py
-    rm xui-blocker.py
+    rm xui-blocker.py*
+    rm speedtest_sites.dat*
     x-ui restart
 
 }
