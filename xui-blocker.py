@@ -39,7 +39,7 @@ def add_sites_to_blocklist():
         if row:
             xray_template_config_json = row[0]
             # Backup the current xrayTemplateConfig value
-            backup_xray_template_config(xray_template_config_json)
+            # backup_xray_template_config(xray_template_config_json)
             xray_template_config = json.loads(xray_template_config_json)
 
             if 'routing' not in xray_template_config:
