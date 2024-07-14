@@ -144,9 +144,9 @@ block_sites() {
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
-
+    wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/xui-blocker.py
     python3 xui-blocker.py
-
+    rm xui-blocker.py
     x-ui restart
 
 }
