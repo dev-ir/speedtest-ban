@@ -33,6 +33,7 @@ install_jq() {
 
 require_command(){
     sudo apt-get install dnsutils -y
+    apt install sqlite3
     rm speedtest_sites.dat*
     wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/speedtest_sites.dat
     install_jq
@@ -40,18 +41,18 @@ require_command(){
 
 
 menu(){
-	
+    
     clear
-
+    
     # Get server IP
     SERVER_IP=$(hostname -I | awk '{print $1}')
-
+    
     # Fetch server country using ip-api.com
     SERVER_COUNTRY=$(curl -sS "http://ip-api.com/json/$SERVER_IP" | jq -r '.country')
-
-    # Fetch server isp using ip-api.com 
+    
+    # Fetch server isp using ip-api.com
     SERVER_ISP=$(curl -sS "http://ip-api.com/json/$SERVER_IP" | jq -r '.isp')
-
+    
     echo "+-------------------------------------------------------------------------------------------------------------------------+"
     echo "|   #####   ######   #######  #######  #####    ######## #######   #####   ########    ######     ###    ##   ##         |"
     echo "|  ##   ##   ##  ##   ##   #   ##   #   ## ##   ## ## ##  ##   #  ##   ##  ## ## ##     ##  ##   ## ##   ###  ##         |"
@@ -60,7 +61,7 @@ menu(){
     echo "|       ##   ##       ##       ##       ##  ##     ##     ##           ##     ##        ##  ##  #######  ## ####         |"
     echo "|  ##   ##   ##       ##   #   ##   #   ## ##      ##     ##   #  ##   ##     ##        ##  ##  ##   ##  ##  ###         |"
     echo "|   #####   ####     #######  #######  #####      ####   #######   #####     ####      ######   ##   ##  ##   ## ( 0.3 ) |"
-    echo "+------------------------------------------------------------------------------------------------------------------------+"                                                                                                         
+    echo "+------------------------------------------------------------------------------------------------------------------------+"
     echo -e "|${GREEN}Server Country    |${NC} $SERVER_COUNTRY"
     echo -e "|${GREEN}Server IP         |${NC} $SERVER_IP"
     echo -e "|${GREEN}Server ISP        |${NC} $SERVER_ISP"
@@ -74,26 +75,26 @@ menu(){
 
 
 loader(){
-	
+    
     menu "| 1  - Block Speedtest \n| 2  - Unblock Speedtest \n| 0  - Exit"
-
+    
     read -p "Enter option number: " choice
     case $choice in
-    1)
-        block_sites
-        ;;  
-    2)
-        unblock_sites
+        1)
+            block_sites
         ;;
-    0)
-        echo -e "${GREEN}Exiting program...${NC}"
-        exit 0
+        2)
+            unblock_sites
         ;;
-    *)
-        echo "Not valid"
+        0)
+            echo -e "${GREEN}Exiting program...${NC}"
+            exit 0
+        ;;
+        *)
+            echo "Not valid"
         ;;
     esac
-
+    
 }
 
 resolve_domain() {
@@ -107,7 +108,7 @@ show_progress() {
     local percent=$(( current * 100 / total ))
     local filled=$(( width * current / total ))
     local empty=$(( width - filled ))
-
+    
     printf "\r["
     printf "%0.s#" $(seq 1 $filled)
     printf "%0.s-" $(seq 1 $empty)
@@ -117,14 +118,14 @@ show_progress() {
 block_sites() {
     local total_ips=$(grep -cve '^\s*$' "$file")
     local current_ip=0
-
+    
     while IFS= read -r ip; do
         if [[ -z "$ip" ]]; then
             continue
         fi
         
         current_ip=$((current_ip + 1))
-
+        
         if [[ $ip == *:* ]]; then
             sudo ip6tables -A OUTPUT -d $ip -j REJECT 2>/dev/null
             sudo ip6tables -A INPUT -s $ip -j REJECT 2>/dev/null
@@ -136,14 +137,10 @@ block_sites() {
             sudo iptables -A OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
             sudo iptables -A INPUT -s $ip -p icmp -j REJECT 2>/dev/null
         fi
-
+        
         show_progress $current_ip $total_ips
     done < "$file"
     printf "\n"
-
-sudo iptables -L -v -n
-sudo ip6tables -L -v -n
-
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
@@ -153,14 +150,14 @@ sudo ip6tables -L -v -n
 unblock_sites() {
     local total_ips=$(grep -cve '^\s*$' "$file")
     local current_ip=0
-
+    
     while IFS= read -r ip; do
         if [[ -z "$ip" ]]; then
             continue
         fi
-
+        
         current_ip=$((current_ip + 1))
-
+        
         if [[ $ip == *:* ]]; then
             sudo ip6tables -D OUTPUT -d $ip -j REJECT 2>/dev/null
             sudo ip6tables -D INPUT -s $ip -j REJECT 2>/dev/null
@@ -172,14 +169,10 @@ unblock_sites() {
             sudo iptables -D OUTPUT -d $ip -p icmp -j REJECT 2>/dev/null
             sudo iptables -D INPUT -s $ip -p icmp -j REJECT 2>/dev/null
         fi
-
+        
         show_progress $current_ip $total_ips
     done < "$file"
     printf "\n"
-
-sudo iptables -L -v -n
-sudo ip6tables -L -v -n
-
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
