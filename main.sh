@@ -76,7 +76,7 @@ menu(){
 
 loader(){
     
-    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Backup Settings \n| 3  - Restore Settings \n| 0  - Exit"
+    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Unblock Speedtest \n|  0  - Exit"
     
     read -p "Enter option number: " choice
     case $choice in
@@ -84,9 +84,6 @@ loader(){
             block_sites
         ;;
         2)
-            backup_db
-        ;;
-        3)
             unblock_sites
         ;;
         0)
@@ -185,7 +182,10 @@ unblock_sites() {
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
-    echo -e "${GREEN} Please Restore to default X-UI Panel :) "
+    wget https://github.com/dev-ir/speedtest-ban/blob/master/restore-backup.py
+    python3 restore-backup.py
+    x-ui restart
+
 }
 
 
