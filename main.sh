@@ -96,33 +96,130 @@ loader(){
 }
 
 resolve_domain() {
-    dig +short $1
-    nslookup $1 | awk '/^Address: / { print $2 }'
+    dig +short $1 | grep -E "^[0-9.]+$|^[0-9a-fA-F:]+$"
+}
+
+show_progress() {
+    local current=$1
+    local total=$2
+    local width=50
+    local percent=$(( current * 100 / total ))
+    local filled=$(( width * current / total ))
+    local empty=$(( width - filled ))
+
+    printf "\r["
+    printf "%0.s#" $(seq 1 $filled)
+    printf "%0.s-" $(seq 1 $empty)
+    printf "] %d%%" $percent
 }
 
 block_sites() {
+    local total_sites=$(grep -cve '^\s*$' "$file")
+    local current_site=0
+
     while IFS= read -r site; do
+        if [[ -z "$site" ]]; then
+            continue
+        fi
+        
+        current_site=$((current_site + 1))
         ips=$(resolve_domain $site)
+        if [[ -z "$ips" ]]; then
+            echo "Could not resolve $site, skipping..."
+            show_progress $current_site $total_sites
+            continue
+        fi
+
         for ip in $ips; do
-            sudo iptables -A OUTPUT -d $ip -j REJECT
-            sudo iptables -A INPUT -s $ip -j REJECT
-            echo "Blocked $site ($ip)"
+            if [[ $ip == *:* ]]; then
+                sudo ip6tables -A OUTPUT -d $ip -j REJECT
+                sudo ip6tables -A INPUT -s $ip -j REJECT
+                sudo ip6tables -A OUTPUT -d $ip -p icmpv6 -j REJECT
+                sudo ip6tables -A INPUT -s $ip -p icmpv6 -j REJECT
+            else
+                sudo iptables -A OUTPUT -d $ip -j REJECT
+                sudo iptables -A INPUT -s $ip -j REJECT
+                sudo iptables -A OUTPUT -d $ip -p icmp -j REJECT
+                sudo iptables -A INPUT -s $ip -p icmp -j REJECT
+            fi
         done
+        show_progress $current_site $total_sites
     done < "$file"
-    sudo iptables-save | sudo tee /etc/iptables/rules.v4
+    printf "\n"
+
+    sudo mkdir -p /etc/iptables
+    sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null
+    sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null
 }
 
 unblock_sites() {
+    local total_sites=$(grep -cve '^\s*$' "$file")
+    local current_site=0
+
     while IFS= read -r site; do
+        # پرش از خطوط خالی
+        if [[ -z "$site" ]]; then
+            continue
+        fi
+        
+        current_site=$((current_site + 1))
         ips=$(resolve_domain $site)
+        if [[ -z "$ips" ]]; then
+            echo "Could not resolve $site, skipping..."
+            show_progress $current_site $total_sites
+            continue
+        fi
+
         for ip in $ips; do
-            sudo iptables -D OUTPUT -d $ip -j REJECT
-            sudo iptables -D INPUT -s $ip -j REJECT
-            echo "Unblocked $site ($ip)"
+            if [[ $ip == *:* ]]; then
+                sudo ip6tables -D OUTPUT -d $ip -j REJECT
+                sudo ip6tables -D INPUT -s $ip -j REJECT
+                sudo ip6tables -D OUTPUT -d $ip -p icmpv6 -j REJECT
+                sudo ip6tables -D INPUT -s $ip -p icmpv6 -j REJECT
+            else
+                sudo iptables -D OUTPUT -d $ip -j REJECT
+                sudo iptables -D INPUT -s $ip -j REJECT
+                sudo iptables -D OUTPUT -d $ip -p icmp -j REJECT
+                sudo iptables -D INPUT -s $ip -p icmp -j REJECT
+            fi
         done
+        show_progress $current_site $total_sites
     done < "$file"
-    sudo iptables-save | sudo tee /etc/iptables/rules.v4
+    printf "\n"
+
+    sudo mkdir -p /etc/iptables
+    sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null
+    sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null
 }
+
+check_block_status() {
+    while IFS= read -r site; do
+        if [[ -z "$site" ]]; then
+            continue
+        fi
+
+        ips=$(resolve_domain $site)
+        blocked="false"
+        for ip in $ips; do
+            if [[ $ip == *:* ]]; then
+                output=$(sudo ip6tables -L -v -n | grep $ip)
+            else
+                output=$(sudo iptables -L -v -n | grep $ip)
+            fi
+            if [[ -n $output ]]; then
+                blocked="true"
+                break
+            fi
+        done
+
+        if [[ $blocked == "true" ]]; then
+            echo "$site is Enable"
+        else
+            echo "$site is Disable"
+        fi
+    done < "$file"
+}
+
 
 require_command
 loader
