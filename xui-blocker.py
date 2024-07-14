@@ -5,7 +5,7 @@ import os
 db_file = '/etc/x-ui/x-ui.db'
 sites_file = '/root/speedtest_sites.dat'
 backup_dir = '/root/speedtest_ban_backup'
-backup_file = os.path.join(backup_dir, 'xrayTemplateConfig_backup.txt')
+backup_file = os.path.join(backup_dir, 'xrayTemplateConfig_backup.json')
 
 def get_sites_from_file(file_path):
     try:
