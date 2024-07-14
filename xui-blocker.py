@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import os
 
 db_file = '/etc/x-ui/x-ui.db'
 sites_file = '/root/speedtest_sites.dat'
