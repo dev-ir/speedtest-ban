@@ -182,7 +182,7 @@ unblock_sites() {
     sudo mkdir -p /etc/iptables
     sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null 2>/dev/null
     sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null 2>/dev/null
-    wget https://github.com/dev-ir/speedtest-ban/blob/master/restore-backup.py
+    wget https://raw.githubusercontent.com/dev-ir/speedtest-ban/master/restore-backup.py
     python3 restore-backup.py
     x-ui restart
 
