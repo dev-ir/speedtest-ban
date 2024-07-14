@@ -190,10 +190,10 @@ unblock_sites() {
 
 
 function backup_db(){
-    
+    rm -rf /root/speedtest_ban_backup/
     mkdir /root/speedtest_ban_backup/
     cp /etc/x-ui/x-ui.db /root/speedtest_ban_backup/
-    echo -e "${RED} Backup has been created in '/root/speedtest_ban_backup/x-ui.db' ."
+    echo -e "${RED} Backup has been created in '/root/speedtest_ban_backup/x-ui.db'${NC}"
 
 }
 
