@@ -96,8 +96,8 @@ loader(){
 }
 
 resolve_domain() {
-    # dig +short $1
-    # nslookup $1 | awk '/^Address: / { print $2 }'
+    dig +short $1
+    nslookup $1 | awk '/^Address: / { print $2 }'
 }
 
 block_sites() {
@@ -124,24 +124,5 @@ unblock_sites() {
     sudo iptables-save | sudo tee /etc/iptables/rules.v4
 }
 
-check_block_status() {
-    while IFS= read -r site; do
-        ips=$(resolve_domain $site)
-        blocked="false"
-        for ip in $ips; do
-            output=$(sudo iptables -L -v -n | grep $ip)
-            if [[ -n $output ]]; then
-                blocked="true"
-                break
-            fi
-        done
-
-        if [[ $blocked == "true" ]]; then
-            echo "$site is Enable"
-        else
-            echo "$site is Disable"
-        fi
-    done < "$file"
-}
 require_command
 loader
