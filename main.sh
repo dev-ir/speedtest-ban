@@ -76,7 +76,7 @@ menu(){
 
 loader(){
     
-    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Unblock Speedtest \n| 0  - Exit"
+    menu "| 1  - Block Speedtest ( X-UI ) \n| 2  - Backup \n| 3  - Restore Settings \n| 0  - Exit"
     
     read -p "Enter option number: " choice
     case $choice in
@@ -84,6 +84,9 @@ loader(){
             block_sites
         ;;
         2)
+            backup_db
+        ;;
+        3)
             unblock_sites
         ;;
         0)
@@ -149,7 +152,7 @@ block_sites() {
     rm xui-blocker.py*
     rm speedtest_sites.dat*
     x-ui restart
-
+    
 }
 
 
@@ -186,7 +189,13 @@ unblock_sites() {
 }
 
 
+function backup_db(){
+    
+    mkdir /root/speedtest_ban_backup/
+    cp /etc/x-ui/x-ui.db /root/speedtest_ban_backup/
+    echo -e "Backup has been created."
 
+}
 
 require_command
 loader
