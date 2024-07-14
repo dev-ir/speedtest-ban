@@ -19,10 +19,8 @@ def get_sites_from_file(file_path):
 def backup_xray_template_config(value):
     try:
         os.makedirs(backup_dir, exist_ok=True)
-        # Convert value to JSON string
-        json_value = json.dumps(value)
         with open(backup_file, 'w') as file:
-            file.write(json_value)
+            file.write(value)
         print(f"Backup of xrayTemplateConfig saved to {backup_file}.")
     except IOError as e:
         print(f"Error writing to backup file {backup_file}: {e}")
