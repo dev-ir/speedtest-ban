@@ -4,7 +4,7 @@ import os
 
 db_file = '/etc/x-ui/x-ui.db'
 backup_dir = '/root/speedtest_ban_backup'
-backup_file = os.path.join(backup_dir, 'xrayTemplateConfig_backup.json')
+backup_file = os.path.join(backup_dir, 'xrayTemplateConfig_backup.txt')
 
 def restore_xray_template_config_from_backup():
     try:
